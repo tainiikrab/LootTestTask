@@ -1,0 +1,175 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+
+namespace LootTestTask.Inventory
+{
+[RequireComponent(typeof(Collider))]
+public class ItemCollector : MonoBehaviour
+{
+    [SerializeField] private Inventory _inventory;
+    [SerializeField] private InputManager _inputManager;
+    [SerializeField] private float _activeRadius;
+    [SerializeField] private float _lookConeAngleDeg = 45;
+
+    [SerializeField] private float _updateCooldown = 0.1f;
+    private float _minLookDot;
+
+    private float _updateTimer;
+
+    private readonly List<WorldItem> _closeItems = new();
+    private IForwardProvider _forwardProvider;
+
+    private WorldItem _bestToPickUp;
+    private float _bestDot;
+
+    private void Awake()
+    {
+        _forwardProvider = GetComponentInParent<IForwardProvider>();
+        _minLookDot = Mathf.Cos(_lookConeAngleDeg * Mathf.Deg2Rad);
+        _bestDot = _minLookDot;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.TryGetComponent(out WorldItem worldItem))
+        {
+            return;
+        }
+
+        if (_closeItems.Contains(worldItem)) return;
+        _closeItems.Add(worldItem);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!other.TryGetComponent(out WorldItem worldItem))
+        {
+            return;
+        }
+
+        _closeItems.Remove(worldItem);
+
+        if (worldItem == _bestToPickUp)
+        {
+            _bestToPickUp = null;
+            _bestDot = _minLookDot;
+        }
+    }
+
+    private void Update()
+    {
+        TryPickUpBest();
+
+        if (!TickScanCooldown()) return;
+
+        _bestDot = _minLookDot;
+        _bestToPickUp = null;
+
+        ScanCloseItems();
+    }
+
+    private void TryPickUpBest()
+    {
+        if (CanPickUp(_bestToPickUp) && _inputManager.IsPickUpTriggered())
+        {
+            if (TryPickUpItem(_bestToPickUp))
+            {
+                _bestToPickUp = null;
+                _bestDot = _minLookDot;
+            }
+        }
+    }
+
+    private bool TickScanCooldown()
+    {
+        _updateTimer += Time.deltaTime;
+        if (_updateTimer < _updateCooldown) return false;
+        _updateTimer = 0;
+        return true;
+    }
+
+    private void ScanCloseItems()
+    {
+        for (int i = _closeItems.Count - 1; i >= 0; i--)
+        {
+            WorldItem worldItem = _closeItems[i];
+
+            if (worldItem == null)
+            {
+                _closeItems.RemoveAt(i);
+                continue;
+            }
+
+            if (worldItem.ItemSO == null || worldItem.Amount <= 0)
+            {
+                _closeItems.RemoveAt(i);
+                Destroy(worldItem.gameObject);
+                continue;
+            }
+
+            if (!IsInActiveRadius(worldItem))
+            {
+                continue;
+            }
+
+            if (worldItem.ItemSO.PickUpType == PickUpType.Automatic)
+            {
+                TryPickUpItem(worldItem);
+                continue;
+            }
+
+            if (!TryGetLookDot(worldItem, out float dot)) continue;
+            if (dot > _bestDot)
+            {
+                _bestToPickUp = worldItem;
+                _bestDot = dot;
+            }
+        }
+    }
+
+    private bool TryPickUpItem(WorldItem worldItem)
+    {
+        int taken = _inventory.TryAddItems(worldItem.ItemSO, worldItem.Amount);
+        if (taken <= 0) return false;
+
+        if (taken == worldItem.Amount)
+        {
+            _closeItems.Remove(worldItem);
+            Destroy(worldItem.gameObject);
+            return true;
+        }
+
+        worldItem.SetAmount(worldItem.Amount - taken);
+        return false;
+    }
+
+    private bool CanPickUp(WorldItem worldItem)
+    {
+        if (worldItem == null) return false;
+        if (!_closeItems.Contains(worldItem)) return false;
+        if (worldItem.ItemSO == null || worldItem.Amount <= 0) return false;
+        if (!IsInActiveRadius(worldItem)) return false;
+        if (!TryGetLookDot(worldItem, out float dot)) return false;
+        return dot > _minLookDot;
+    }
+
+    private bool IsInActiveRadius(WorldItem worldItem)
+    {
+        return Vector3.SqrMagnitude(worldItem.transform.position - transform.position)
+               <= _activeRadius * _activeRadius;
+    }
+
+    private bool TryGetLookDot(WorldItem worldItem, out float dot)
+    {
+        Vector3 toItem = _forwardProvider.VectorTo(worldItem.transform);
+        if (toItem == Vector3.zero)
+        {
+            dot = 0f;
+            return false;
+        }
+
+        dot = Vector3.Dot(_forwardProvider.Forward, toItem.normalized);
+        return true;
+    }
+}
+}

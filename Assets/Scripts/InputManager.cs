@@ -32,15 +32,21 @@ public class InputManager : MonoBehaviour, IInputManager
         return new Vector3(vec2.x, 0, vec2.y);
     }
 
-    public bool IsJumping()
+    public bool IsJumpTriggered()
     {
         return _inputActions.Player.Jump.triggered;
+    }
+
+    public bool IsPickUpTriggered()
+    {
+        return _inputActions.Player.PickUp.triggered;
     }
 }
 
 public interface IInputManager
 {
     Vector3 GetMovement();
-    bool IsJumping();
+    bool IsJumpTriggered();
+    bool IsPickUpTriggered();
 }
 }
