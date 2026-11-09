@@ -17,9 +17,11 @@ public class ItemCollector : MonoBehaviour
     private float _updateTimer;
 
     private readonly List<WorldItem> _closeItems = new();
+    public IReadOnlyList<WorldItem> CloseItems => _closeItems;
+    
     private IForwardProvider _forwardProvider;
 
-    private WorldItem _bestToPickUp;
+    public WorldItem BestToPickUp { get; private set; }
     private float _bestDot;
 
     private void Awake()
@@ -49,9 +51,9 @@ public class ItemCollector : MonoBehaviour
 
         _closeItems.Remove(worldItem);
 
-        if (worldItem == _bestToPickUp)
+        if (worldItem == BestToPickUp)
         {
-            _bestToPickUp = null;
+            BestToPickUp = null;
             _bestDot = _minLookDot;
         }
     }
@@ -63,18 +65,18 @@ public class ItemCollector : MonoBehaviour
         if (!TickScanCooldown()) return;
 
         _bestDot = _minLookDot;
-        _bestToPickUp = null;
+        BestToPickUp = null;
 
         ScanCloseItems();
     }
 
     private void TryPickUpBest()
     {
-        if (CanPickUp(_bestToPickUp) && _inputManager.IsPickUpTriggered())
+        if (CanPickUp(BestToPickUp) && _inputManager.IsPickUpTriggered())
         {
-            if (TryPickUpItem(_bestToPickUp))
+            if (TryPickUpItem(BestToPickUp))
             {
-                _bestToPickUp = null;
+                BestToPickUp = null;
                 _bestDot = _minLookDot;
             }
         }
@@ -121,7 +123,7 @@ public class ItemCollector : MonoBehaviour
             if (!TryGetLookDot(worldItem, out float dot)) continue;
             if (dot > _bestDot)
             {
-                _bestToPickUp = worldItem;
+                BestToPickUp = worldItem;
                 _bestDot = dot;
             }
         }
