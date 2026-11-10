@@ -319,7 +319,7 @@ Transform:
   m_GameObject: {fileID: 28560416}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.41, z: 4.47}
+  m_LocalPosition: {x: 2.44, y: 0.41, z: 7.83}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5049,7 +5049,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootTestTask.Inventory.WorldItem
   <ItemSO>k__BackingField: {fileID: 11400000, guid: 37c29badec745a449a6defdb175e1ff0, type: 2}
-  <Amount>k__BackingField: 10
+  <Amount>k__BackingField: 6
 --- !u!65 &1517265836
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5137,7 +5137,7 @@ Transform:
   m_GameObject: {fileID: 1517265834}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.02, y: 0.41, z: 4.49}
+  m_LocalPosition: {x: 2.37, y: 0.41, z: 3.85}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5172,7 +5172,7 @@ Transform:
   m_GameObject: {fileID: 1596142369}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.33, y: 0.41, z: 4.47}
+  m_LocalPosition: {x: 2.84, y: 0.41, z: 12.06}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
