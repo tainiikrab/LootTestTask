@@ -25,7 +25,7 @@ public class InventorySlot
     {
         if (delta == 0) return false;
 
-        if (Amount + delta > 0 && Amount + delta <= Item.StackSize)
+        if (Amount + delta > 0 && Amount + delta <= Item.MaxStack)
         {
             Amount += delta;
             return true;

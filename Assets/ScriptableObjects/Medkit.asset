@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootTestTask.Inventory.ItemSO
   Category: 0
   PickUpType: 0
+  Name: "\u0410\u043F\u0442\u0435\u0447\u043A\u0430"
   Weight: 3
-  StackSize: 4
+  MaxStack: 3
   BreakdownComponents: []

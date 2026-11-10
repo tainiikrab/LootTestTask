@@ -18,11 +18,18 @@ public class ItemCollector : MonoBehaviour
 
     private readonly List<WorldItem> _closeItems = new();
     public IReadOnlyList<WorldItem> CloseItems => _closeItems;
-    
+
+    private readonly Dictionary<WorldItem, int> _blockedAutoPickups = new();
+
     private IForwardProvider _forwardProvider;
 
     public WorldItem BestToPickUp { get; private set; }
     private float _bestDot;
+
+    public bool CanAccept(WorldItem worldItem)
+    {
+        return worldItem != null && _inventory.CanAddAny(worldItem.ItemSO);
+    }
 
     private void Awake()
     {
@@ -50,6 +57,7 @@ public class ItemCollector : MonoBehaviour
         }
 
         _closeItems.Remove(worldItem);
+        ForgetAutoPickupBlock(worldItem);
 
         if (worldItem == BestToPickUp)
         {
@@ -98,12 +106,14 @@ public class ItemCollector : MonoBehaviour
 
             if (worldItem == null)
             {
+                ForgetAutoPickupBlock(worldItem);
                 _closeItems.RemoveAt(i);
                 continue;
             }
 
             if (worldItem.ItemSO == null || worldItem.Amount <= 0)
             {
+                ForgetAutoPickupBlock(worldItem);
                 _closeItems.RemoveAt(i);
                 Destroy(worldItem.gameObject);
                 continue;
@@ -111,12 +121,13 @@ public class ItemCollector : MonoBehaviour
 
             if (!IsInActiveRadius(worldItem))
             {
+                ForgetAutoPickupBlock(worldItem);
                 continue;
             }
 
             if (worldItem.ItemSO.PickUpType == PickUpType.Automatic)
             {
-                TryPickUpItem(worldItem);
+                TryAutoPickUpItem(worldItem);
                 continue;
             }
 
@@ -129,13 +140,50 @@ public class ItemCollector : MonoBehaviour
         }
     }
 
+    private void TryAutoPickUpItem(WorldItem worldItem)
+    {
+        if (IsAutoPickupBlocked(worldItem)) return;
+
+        if (TryPickUpItem(worldItem, out int taken)) return;
+        if (taken > 0) return;
+
+        _blockedAutoPickups[worldItem] = _inventory.GetFreeWeight();
+    }
+
+    private bool IsAutoPickupBlocked(WorldItem worldItem)
+    {
+        if (!_blockedAutoPickups.TryGetValue(worldItem, out int freeWeightWhenBlocked))
+        {
+            return false;
+        }
+
+        if (_inventory.GetFreeWeight() != freeWeightWhenBlocked)
+        {
+            ForgetAutoPickupBlock(worldItem);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ForgetAutoPickupBlock(WorldItem worldItem)
+    {
+        _blockedAutoPickups.Remove(worldItem);
+    }
+
     private bool TryPickUpItem(WorldItem worldItem)
     {
-        int taken = _inventory.TryAddItems(worldItem.ItemSO, worldItem.Amount);
+        return TryPickUpItem(worldItem, out _);
+    }
+
+    private bool TryPickUpItem(WorldItem worldItem, out int taken)
+    {
+        taken = _inventory.TryAddItems(worldItem.ItemSO, worldItem.Amount);
         if (taken <= 0) return false;
 
         if (taken == worldItem.Amount)
         {
+            ForgetAutoPickupBlock(worldItem);
             _closeItems.Remove(worldItem);
             Destroy(worldItem.gameObject);
             return true;
